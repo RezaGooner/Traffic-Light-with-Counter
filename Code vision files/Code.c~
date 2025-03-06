@@ -1,0 +1,84 @@
+#include <mega32.h>
+#include <delay.h>
+
+// ÊÚÑíİ íäåÇí ãÑÈæØ Èå ÑÇÛåÇí ÊÑÇİí˜
+#define RED_LED    PORTA.0
+#define YELLOW_LED PORTA.1
+#define GREEN_LED  PORTA.2
+
+// ÊÚÑíİ íäåÇí ãÑÈæØ Èå Óæä ÓãäÊåÇ
+#define SEGMENT_PORT_1 PORTC // Óæä ÓãäÊ Çæá (í˜Çä)
+#define SEGMENT_PORT_2 PORTD // Óæä ÓãäÊ Ïæã (ÏåÇä)
+#define SEGMENT_DDR_1  DDRC
+#define SEGMENT_DDR_2  DDRD
+
+// ÊÚÑíİ ÇÚÏÇÏ ÈÑÇí äãÇíÔ Ñæí Óæä ÓãäÊ (Common Anode)
+const unsigned char segment_numbers[] = {
+    0b11000000, // 0
+    0b11111001, // 1
+    0b10100100, // 2
+    0b10110000, // 3
+    0b10011001, // 4
+    0b10010010, // 5
+    0b10000010, // 6
+    0b11111000, // 7
+    0b10000000, // 8
+    0b10010000  // 9
+};
+
+// ÊÇÈÚ ÈÑÇí äãÇíÔ ÚÏÏ Ñæí Óæä ÓãäÊ
+void display_number(unsigned char number, unsigned char segment_port) {
+    if (segment_port == 1) {
+        SEGMENT_PORT_1 = segment_numbers[number];
+    } else if (segment_port == 2) {
+        SEGMENT_PORT_2 = segment_numbers[number];
+    }
+}
+
+void main(void) {
+    // ÊÚÑíİ ÊãÇã ãÊÛíÑåÇ ÏÑ ÇÈÊÏÇí ÊÇÈÚ
+    unsigned char i, tens, ones;
+
+    // ÊäÙíã æÑÊåÇ
+    DDRA = 0xFF; // æÑÊ A Èå ÚäæÇä ÎÑæÌí ÈÑÇí ÑÇÛåÇ
+    DDRC = 0xFF; // æÑÊ C Èå ÚäæÇä ÎÑæÌí ÈÑÇí Óæä ÓãäÊ í˜Çä
+    DDRD = 0xFF; // æÑÊ D Èå ÚäæÇä ÎÑæÌí ÈÑÇí Óæä ÓãäÊ ÏåÇä
+
+    while (1) {
+        // ÍÇáÊ ŞÑãÒ (10 ËÇäíå)
+        RED_LED = 1;    // ÑæÔä ˜ÑÏä LED ŞÑãÒ
+        YELLOW_LED = 0; // ÎÇãæÔ ˜ÑÏä LED ÒÑÏ
+        GREEN_LED = 0;  // ÎÇãæÔ ˜ÑÏä LED ÓÈÒ
+        for (i = 10; i > 0; i--) { // ÇÒ 10 ÊÇ 1 ÔãÇÑÔ
+            tens = i / 10; // ÑŞã ÏåÇä
+            ones = i % 10; // ÑŞã í˜Çä
+            display_number(ones, 1); // äãÇíÔ í˜Çä Ñæí Óæä ÓãäÊ Çæá
+            display_number(tens, 2); // äãÇíÔ ÏåÇä Ñæí Óæä ÓãäÊ Ïæã
+            delay_ms(1000); // ÊÇÎíÑ 1 ËÇäíå
+        }
+
+        // ÍÇáÊ ÓÈÒ (10 ËÇäíå)
+        RED_LED = 0;    // ÎÇãæÔ ˜ÑÏä LED ŞÑãÒ
+        YELLOW_LED = 0; // ÎÇãæÔ ˜ÑÏä LED ÒÑÏ
+        GREEN_LED = 1;  // ÑæÔä ˜ÑÏä LED ÓÈÒ
+        for (i = 10; i > 0; i--) { // ÇÒ 10 ÊÇ 1 ÔãÇÑÔ
+            tens = i / 10; // ÑŞã ÏåÇä
+            ones = i % 10; // ÑŞã í˜Çä
+            display_number(ones, 1); // äãÇíÔ í˜Çä Ñæí Óæä ÓãäÊ Çæá
+            display_number(tens, 2); // äãÇíÔ ÏåÇä Ñæí Óæä ÓãäÊ Ïæã
+            delay_ms(1000); // ÊÇÎíÑ 1 ËÇäíå
+        }
+
+        // ÍÇáÊ ÒÑÏ (3 ËÇäíå)
+        RED_LED = 0;    // ÎÇãæÔ ˜ÑÏä LED ŞÑãÒ
+        YELLOW_LED = 1; // ÑæÔä ˜ÑÏä LED ÒÑÏ
+        GREEN_LED = 0;  // ÎÇãæÔ ˜ÑÏä LED ÓÈÒ
+        for (i = 3; i > 0; i--) { // ÇÒ 3 ÊÇ 1 ÔãÇÑÔ
+            tens = i / 10; // ÑŞã ÏåÇä
+            ones = i % 10; // ÑŞã í˜Çä
+            display_number(ones, 1); // äãÇíÔ í˜Çä Ñæí Óæä ÓãäÊ Çæá
+            display_number(tens, 2); // äãÇíÔ ÏåÇä Ñæí Óæä ÓãäÊ Ïæã
+            delay_ms(1000); // ÊÇÎíÑ 1 ËÇäíå
+        }
+    }
+}

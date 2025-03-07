@@ -16,6 +16,8 @@ This repository contains the C code and Proteus simulation files for a **Traffic
 
 ![bandicam 2025-03-07 02-40-58-368](https://github.com/user-attachments/assets/191d6322-5526-4059-bfc6-5e4605477a78)
 
+Related to previous version (without time adjustment)
+
 ---
 ## Simulation Instructions
 To simulate the project, follow these steps:
@@ -44,6 +46,7 @@ To simulate the project, follow these steps:
 2. **Adjustable Timings**:
    - Buttons are used to increase or decrease the duration of each light.
    - The updated timings are reflected in the countdown display.
+   - After finishing the setting, press the three buttons in order to apply.
 
 3. **7-Segment Display**:
    - A two-digit 7-segment display shows the remaining time for the current light in a countdown format.

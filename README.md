@@ -57,7 +57,7 @@ To simulate the project, follow these steps:
 - **Hardware** (for real-world implementation):
   - ATmega32 microcontroller
   - LEDs (Red, Yellow, Green)
-  - Two-digit 7-segment display
+  - Two 7-segment display
   - Buttons for adjusting timings
 
 ---

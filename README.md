@@ -6,7 +6,7 @@ This repository contains the C code and Proteus simulation files for a **Traffic
 
 ## Features
 - **Three Traffic Lights**: Red, Yellow, and Green LEDs.
-- **Two-Digit 7-Segment Display**: Displays the countdown timer for each light.
+- **Two 7-Segment Display**: Displays the countdown timer for each light.
 - **Adjustable Timings**: The duration for each light can be configured using buttons.
 - **Proteus Simulation**: Fully simulated in Proteus for testing and visualization.
 - **C Code**: Written in Embedded C using CodeVisionAVR.

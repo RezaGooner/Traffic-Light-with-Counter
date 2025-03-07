@@ -1,6 +1,9 @@
 
-AVRASM ver. 2.1.30  C:\Users\Reza\Desktop\PPP\Debug\List\Project File.asm Fri Mar 07 02:07:18 2025
+AVRASM ver. 2.1.30  C:\Users\Reza\Desktop\Code vision files\Debug\List\Project File.asm Fri Mar 07 13:42:46 2025
 
+C:\Users\Reza\Desktop\Code vision files\Debug\List\Project File.asm(1088): warning: Register r5 already defined by the .DEF directive
+C:\Users\Reza\Desktop\Code vision files\Debug\List\Project File.asm(1089): warning: Register r4 already defined by the .DEF directive
+C:\Users\Reza\Desktop\Code vision files\Debug\List\Project File.asm(1090): warning: Register r7 already defined by the .DEF directive
                  
                  
                  ;CodeVisionAVR C Compiler V3.12 Advanced
@@ -1088,6 +1091,11 @@ AVRASM ver. 2.1.30  C:\Users\Reza\Desktop\PPP\Debug\List\Project File.asm Fri Ma
                  	ADD  R31,R0
                  	.ENDM
                  
+                 ;NAME DEFINITIONS FOR GLOBAL VARIABLES ALLOCATED TO REGISTERS
+                 	.DEF _red_time=R5
+                 	.DEF _green_time=R4
+                 	.DEF _yellow_time=R7
+                 
                  	.CSEG
                  	.ORG 0x00
                  
@@ -1095,7 +1103,7 @@ AVRASM ver. 2.1.30  C:\Users\Reza\Desktop\PPP\Debug\List\Project File.asm Fri Ma
                  __START_OF_CODE:
                  
                  ;INTERRUPT VECTORS
-000000 940c 002f 	JMP  __RESET
+000000 940c 0035 	JMP  __RESET
 000002 940c 0000 	JMP  0x00
 000004 940c 0000 	JMP  0x00
 000006 940c 0000 	JMP  0x00
@@ -1124,47 +1132,86 @@ AVRASM ver. 2.1.30  C:\Users\Reza\Desktop\PPP\Debug\List\Project File.asm Fri Ma
 00002d f882      	.DB  0xC0,0xF9,0xA4,0xB0,0x99,0x92,0x82,0xF8
 00002e 9080      	.DB  0x80,0x90
                  
+                 ;GLOBAL REGISTER VARIABLES INITIALIZATION
+                 __REG_VARS:
+00002f 0a0a
+000030 0300      	.DB  0xA,0xA,0x0,0x3
+                 
+                 
+                 __GLOBAL_INI_TBL:
+000031 0004      	.DW  0x04
+000032 0004      	.DW  0x04
+000033 005e      	.DW  __REG_VARS*2
+                 
+                 _0xFFFFFFFF:
+000034 0000      	.DW  0
+                 
+                 #define __GLOBAL_INI_TBL_PRESENT 1
+                 
                  __RESET:
-00002f 94f8      	CLI
-000030 27ee      	CLR  R30
-000031 bbec      	OUT  EECR,R30
+000035 94f8      	CLI
+000036 27ee      	CLR  R30
+000037 bbec      	OUT  EECR,R30
                  
                  ;INTERRUPT VECTORS ARE PLACED
                  ;AT THE START OF FLASH
-000032 e0f1      	LDI  R31,1
-000033 bffb      	OUT  GICR,R31
-000034 bfeb      	OUT  GICR,R30
-000035 bfe5      	OUT  MCUCR,R30
+000038 e0f1      	LDI  R31,1
+000039 bffb      	OUT  GICR,R31
+00003a bfeb      	OUT  GICR,R30
+00003b bfe5      	OUT  MCUCR,R30
                  
                  ;CLEAR R2-R14
-000036 e08d      	LDI  R24,(14-2)+1
-000037 e0a2      	LDI  R26,2
-000038 27bb      	CLR  R27
+00003c e08d      	LDI  R24,(14-2)+1
+00003d e0a2      	LDI  R26,2
+00003e 27bb      	CLR  R27
                  __CLEAR_REG:
-000039 93ed      	ST   X+,R30
-00003a 958a      	DEC  R24
-00003b f7e9      	BRNE __CLEAR_REG
+00003f 93ed      	ST   X+,R30
+000040 958a      	DEC  R24
+000041 f7e9      	BRNE __CLEAR_REG
                  
                  ;CLEAR SRAM
-00003c e080      	LDI  R24,LOW(__CLEAR_SRAM_SIZE)
-00003d e098      	LDI  R25,HIGH(__CLEAR_SRAM_SIZE)
-00003e e6a0      	LDI  R26,__SRAM_START
+000042 e080      	LDI  R24,LOW(__CLEAR_SRAM_SIZE)
+000043 e098      	LDI  R25,HIGH(__CLEAR_SRAM_SIZE)
+000044 e6a0      	LDI  R26,__SRAM_START
                  __CLEAR_SRAM:
-00003f 93ed      	ST   X+,R30
-000040 9701      	SBIW R24,1
-000041 f7e9      	BRNE __CLEAR_SRAM
+000045 93ed      	ST   X+,R30
+000046 9701      	SBIW R24,1
+000047 f7e9      	BRNE __CLEAR_SRAM
+                 
+                 ;GLOBAL VARIABLES INITIALIZATION
+000048 e6e2      	LDI  R30,LOW(__GLOBAL_INI_TBL*2)
+000049 e0f0      	LDI  R31,HIGH(__GLOBAL_INI_TBL*2)
+                 __GLOBAL_INI_NEXT:
+00004a 9185      	LPM  R24,Z+
+00004b 9195      	LPM  R25,Z+
+00004c 9700      	SBIW R24,0
+00004d f061      	BREQ __GLOBAL_INI_END
+00004e 91a5      	LPM  R26,Z+
+00004f 91b5      	LPM  R27,Z+
+000050 9005      	LPM  R0,Z+
+000051 9015      	LPM  R1,Z+
+000052 01bf      	MOVW R22,R30
+000053 01f0      	MOVW R30,R0
+                 __GLOBAL_INI_LOOP:
+000054 9005      	LPM  R0,Z+
+000055 920d      	ST   X+,R0
+000056 9701      	SBIW R24,1
+000057 f7e1      	BRNE __GLOBAL_INI_LOOP
+000058 01fb      	MOVW R30,R22
+000059 cff0      	RJMP __GLOBAL_INI_NEXT
+                 __GLOBAL_INI_END:
                  
                  ;HARDWARE STACK POINTER INITIALIZATION
-000042 e5ef      	LDI  R30,LOW(__SRAM_END-__HEAP_SIZE)
-000043 bfed      	OUT  SPL,R30
-000044 e0e8      	LDI  R30,HIGH(__SRAM_END-__HEAP_SIZE)
-000045 bfee      	OUT  SPH,R30
+00005a e5ef      	LDI  R30,LOW(__SRAM_END-__HEAP_SIZE)
+00005b bfed      	OUT  SPL,R30
+00005c e0e8      	LDI  R30,HIGH(__SRAM_END-__HEAP_SIZE)
+00005d bfee      	OUT  SPH,R30
                  
                  ;DATA STACK POINTER INITIALIZATION
-000046 e6c0      	LDI  R28,LOW(__SRAM_START+__DSTACK_SIZE)
-000047 e0d2      	LDI  R29,HIGH(__SRAM_START+__DSTACK_SIZE)
+00005e e6c0      	LDI  R28,LOW(__SRAM_START+__DSTACK_SIZE)
+00005f e0d2      	LDI  R29,HIGH(__SRAM_START+__DSTACK_SIZE)
                  
-000048 940c 0060 	JMP  _main
+000060 940c 00b3 	JMP  _main
                  
                  	.ESEG
                  	.ORG 0
@@ -1198,6 +1245,20 @@ AVRASM ver. 2.1.30  C:\Users\Reza\Desktop\PPP\Debug\List\Project File.asm Fri Ma
                  ;#define SEGMENT_DDR_1  DDRC
                  ;#define SEGMENT_DDR_2  DDRD
                  ;
+                 ;// Define pins for buttons
+                 ;#define RED_BUTTON    PINB.0  // Use PINB for reading button state
+                 ;#define GREEN_BUTTON  PINB.1  // Use PINB for reading button state
+                 ;#define YELLOW_BUTTON PINB.2  // Use PINB for reading button state
+                 ;
+                 ;// Define pins for mode switch
+                 ;#define MODE_SWITCH_1 PINB.3  // Mode 1: Normal operation
+                 ;#define MODE_SWITCH_2 PINB.4  // Mode 2: Time adjustment
+                 ;
+                 ;// Define variables for traffic light timings
+                 ;unsigned char red_time = 10;    // Default red time
+                 ;unsigned char green_time = 10;  // Default green time
+                 ;unsigned char yellow_time = 3;  // Default yellow time
+                 ;
                  ;// Define numbers for 7-segment display (Common Anode)
                  ;const unsigned char segment_numbers[] = {
                  ;    0b11000000, // 0
@@ -1214,259 +1275,442 @@ AVRASM ver. 2.1.30  C:\Users\Reza\Desktop\PPP\Debug\List\Project File.asm Fri Ma
                  ;
                  ;// Function to display a number on the 7-segment
                  ;void display_number(unsigned char number, unsigned char segment_port) {
-                 ; 0000 001E void display_number(unsigned char number, unsigned char segment_port) {
+                 ; 0000 002C void display_number(unsigned char number, unsigned char segment_port) {
                  
                  	.CSEG
                  _display_number:
                  ; .FSTART _display_number
-                 ; 0000 001F     if (segment_port == 1) {
-00004a 93aa      	ST   -Y,R26
+                 ; 0000 002D     if (segment_port == 1) {
+000062 93aa      	ST   -Y,R26
                  ;	number -> Y+1
                  ;	segment_port -> Y+0
-00004b 81a8      	LD   R26,Y
-00004c 30a1      	CPI  R26,LOW(0x1)
-00004d f439      	BRNE _0x3
-                 ; 0000 0020         SEGMENT_PORT_1 = segment_numbers[number];
-00004e 81e9      	LDD  R30,Y+1
-00004f e0f0      	LDI  R31,0
-000050 5aec      	SUBI R30,LOW(-_segment_numbers*2)
-000051 4fff      	SBCI R31,HIGH(-_segment_numbers*2)
-000052 9004      	LPM  R0,Z
-000053 ba05      	OUT  0x15,R0
-                 ; 0000 0021     } else if (segment_port == 2) {
-000054 c009      	RJMP _0x4
+000063 81a8      	LD   R26,Y
+000064 30a1      	CPI  R26,LOW(0x1)
+000065 f439      	BRNE _0x3
+                 ; 0000 002E         SEGMENT_PORT_1 = segment_numbers[number];
+000066 81e9      	LDD  R30,Y+1
+000067 e0f0      	LDI  R31,0
+000068 5aec      	SUBI R30,LOW(-_segment_numbers*2)
+000069 4fff      	SBCI R31,HIGH(-_segment_numbers*2)
+00006a 9004      	LPM  R0,Z
+00006b ba05      	OUT  0x15,R0
+                 ; 0000 002F     } else if (segment_port == 2) {
+00006c c009      	RJMP _0x4
                  _0x3:
-000055 81a8      	LD   R26,Y
-000056 30a2      	CPI  R26,LOW(0x2)
-000057 f431      	BRNE _0x5
-                 ; 0000 0022         SEGMENT_PORT_2 = segment_numbers[number];
-000058 81e9      	LDD  R30,Y+1
-000059 e0f0      	LDI  R31,0
-00005a 5aec      	SUBI R30,LOW(-_segment_numbers*2)
-00005b 4fff      	SBCI R31,HIGH(-_segment_numbers*2)
-00005c 9004      	LPM  R0,Z
-00005d ba02      	OUT  0x12,R0
-                 ; 0000 0023     }
-                 ; 0000 0024 }
+00006d 81a8      	LD   R26,Y
+00006e 30a2      	CPI  R26,LOW(0x2)
+00006f f431      	BRNE _0x5
+                 ; 0000 0030         SEGMENT_PORT_2 = segment_numbers[number];
+000070 81e9      	LDD  R30,Y+1
+000071 e0f0      	LDI  R31,0
+000072 5aec      	SUBI R30,LOW(-_segment_numbers*2)
+000073 4fff      	SBCI R31,HIGH(-_segment_numbers*2)
+000074 9004      	LPM  R0,Z
+000075 ba02      	OUT  0x12,R0
+                 ; 0000 0031     }
+                 ; 0000 0032 }
                  _0x5:
                  _0x4:
-00005e 9622      	ADIW R28,2
-00005f 9508      	RET
+000076 c010      	RJMP _0x2000001
+                 ; .FEND
+                 ;
+                 ;// Function to increase the time for a specific light
+                 ;void increase_time(unsigned char *time) {
+                 ; 0000 0035 void increase_time(unsigned char *time) {
+                 _increase_time:
+                 ; .FSTART _increase_time
+                 ; 0000 0036     if (*time < 99) {
+000077 93ba      	ST   -Y,R27
+000078 93aa      	ST   -Y,R26
+                 ;	*time -> Y+0
+000079 81a8      	LD   R26,Y
+00007a 81b9      	LDD  R27,Y+1
+00007b 91ac      	LD   R26,X
+00007c 36a3      	CPI  R26,LOW(0x63)
+00007d f428      	BRSH _0x6
+                 ; 0000 0037         (*time)++; // Increase time
+00007e 81a8      	LD   R26,Y
+00007f 81b9      	LDD  R27,Y+1
+000080 91ec      	LD   R30,X
+000081 5fef      	SUBI R30,-LOW(1)
+000082 c003      	RJMP _0x43
+                 ; 0000 0038     } else {
+                 _0x6:
+                 ; 0000 0039         *time = 1; // Reset to 1 if time reaches 99
+000083 81a8      	LD   R26,Y
+000084 81b9      	LDD  R27,Y+1
+000085 e0e1      	LDI  R30,LOW(1)
+                 _0x43:
+000086 93ec      	ST   X,R30
+                 ; 0000 003A     }
+                 ; 0000 003B }
+                 _0x2000001:
+000087 9622      	ADIW R28,2
+000088 9508      	RET
+                 ; .FEND
+                 ;
+                 ;// Function to handle time adjustment mode
+                 ;void time_adjustment_mode() {
+                 ; 0000 003E void time_adjustment_mode() {
+                 _time_adjustment_mode:
+                 ; .FSTART _time_adjustment_mode
+                 ; 0000 003F     // Turn off all traffic lights
+                 ; 0000 0040     RED_LED = 0;
+000089 98d8      	CBI  0x1B,0
+                 ; 0000 0041     YELLOW_LED = 0;
+00008a 98d9      	CBI  0x1B,1
+                 ; 0000 0042     GREEN_LED = 0;
+00008b 98da      	CBI  0x1B,2
+                 ; 0000 0043 
+                 ; 0000 0044     while (MODE_SWITCH_2 == 1) {
+                 _0xE:
+00008c 9bb4      	SBIS 0x16,4
+00008d c024      	RJMP _0x10
+                 ; 0000 0045         // Adjust red time
+                 ; 0000 0046         display_number(red_time % 10, 1); // Display units
+00008e 2da5      	MOV  R26,R5
+00008f d051      	RCALL SUBOPT_0x0
+                 ; 0000 0047         display_number(red_time / 10, 2); // Display tens
+000090 2da5      	MOV  R26,R5
+000091 d057      	RCALL SUBOPT_0x1
+                 ; 0000 0048         if (RED_BUTTON == 1) {
+000092 9bb0      	SBIS 0x16,0
+000093 c005      	RJMP _0x11
+                 ; 0000 0049             increase_time(&red_time); // Increase red time
+000094 e0a5      	LDI  R26,LOW(5)
+000095 e0b0      	LDI  R27,HIGH(5)
+000096 d05a      	RCALL SUBOPT_0x2
+                 ; 0000 004A             delay_ms(300); // Debounce delay
+                 ; 0000 004B             while (RED_BUTTON == 1); // Wait for button release
+                 _0x12:
+000097 99b0      	SBIC 0x16,0
+000098 cffe      	RJMP _0x12
+                 ; 0000 004C         }
+                 ; 0000 004D 
+                 ; 0000 004E         // Adjust green time
+                 ; 0000 004F         display_number(green_time % 10, 1); // Display units
+                 _0x11:
+000099 2da4      	MOV  R26,R4
+00009a d046      	RCALL SUBOPT_0x0
+                 ; 0000 0050         display_number(green_time / 10, 2); // Display tens
+00009b 2da4      	MOV  R26,R4
+00009c d04c      	RCALL SUBOPT_0x1
+                 ; 0000 0051         if (GREEN_BUTTON == 1) {
+00009d 9bb1      	SBIS 0x16,1
+00009e c005      	RJMP _0x15
+                 ; 0000 0052             increase_time(&green_time); // Increase green time
+00009f e0a4      	LDI  R26,LOW(4)
+0000a0 e0b0      	LDI  R27,HIGH(4)
+0000a1 d04f      	RCALL SUBOPT_0x2
+                 ; 0000 0053             delay_ms(300); // Debounce delay
+                 ; 0000 0054             while (GREEN_BUTTON == 1); // Wait for button release
+                 _0x16:
+0000a2 99b1      	SBIC 0x16,1
+0000a3 cffe      	RJMP _0x16
+                 ; 0000 0055         }
+                 ; 0000 0056 
+                 ; 0000 0057         // Adjust yellow time
+                 ; 0000 0058         display_number(yellow_time % 10, 1); // Display units
+                 _0x15:
+0000a4 2da7      	MOV  R26,R7
+0000a5 d03b      	RCALL SUBOPT_0x0
+                 ; 0000 0059         display_number(yellow_time / 10, 2); // Display tens
+0000a6 2da7      	MOV  R26,R7
+0000a7 d041      	RCALL SUBOPT_0x1
+                 ; 0000 005A         if (YELLOW_BUTTON == 1) {
+0000a8 9bb2      	SBIS 0x16,2
+0000a9 c005      	RJMP _0x19
+                 ; 0000 005B             increase_time(&yellow_time); // Increase yellow time
+0000aa e0a7      	LDI  R26,LOW(7)
+0000ab e0b0      	LDI  R27,HIGH(7)
+0000ac d044      	RCALL SUBOPT_0x2
+                 ; 0000 005C             delay_ms(300); // Debounce delay
+                 ; 0000 005D             while (YELLOW_BUTTON == 1); // Wait for button release
+                 _0x1A:
+0000ad 99b2      	SBIC 0x16,2
+0000ae cffe      	RJMP _0x1A
+                 ; 0000 005E         }
+                 ; 0000 005F 
+                 ; 0000 0060         // Check if mode switch is changed to normal mode
+                 ; 0000 0061         if (MODE_SWITCH_1 == 1) {
+                 _0x19:
+0000af 99b3      	SBIC 0x16,3
+                 ; 0000 0062             break; // Exit time adjustment mode
+0000b0 c001      	RJMP _0x10
+                 ; 0000 0063         }
+                 ; 0000 0064     }
+0000b1 cfda      	RJMP _0xE
+                 _0x10:
+                 ; 0000 0065 }
+0000b2 9508      	RET
                  ; .FEND
                  ;
                  ;void main(void) {
-                 ; 0000 0026 void main(void) {
+                 ; 0000 0067 void main(void) {
                  _main:
                  ; .FSTART _main
-                 ; 0000 0027     // Define all nedded variables at the beginning of the function
-                 ; 0000 0028     unsigned char i, tens, ones;
-                 ; 0000 0029 
-                 ; 0000 002A     // Configure ports
-                 ; 0000 002B     DDRA = 0xFF; // Port A as output for traffic lights
+                 ; 0000 0068     // Define all variables at the beginning of the function
+                 ; 0000 0069     unsigned char i, tens, ones;
+                 ; 0000 006A 
+                 ; 0000 006B     // Configure ports
+                 ; 0000 006C     DDRA = 0xFF; // Port A as output for traffic lights
                  ;	i -> R17
                  ;	tens -> R16
                  ;	ones -> R19
-000060 efef      	LDI  R30,LOW(255)
-000061 bbea      	OUT  0x1A,R30
-                 ; 0000 002C     DDRC = 0xFF; // Port C as output for the first 7-segment (units)
-000062 bbe4      	OUT  0x14,R30
-                 ; 0000 002D     DDRD = 0xFF; // Port D as output for the second 7-segment (tens)
-000063 bbe1      	OUT  0x11,R30
-                 ; 0000 002E 
-                 ; 0000 002F     while (1) {
-                 _0x6:
-                 ; 0000 0030         // Red state (10 seconds)
-                 ; 0000 0031         RED_LED = 1;    // Turn on the red LED
-000064 9ad8      	SBI  0x1B,0
-                 ; 0000 0032         YELLOW_LED = 0; // Turn off the yellow LED
-000065 98d9      	CBI  0x1B,1
-                 ; 0000 0033         GREEN_LED = 0;  // Turn off the green LED
-000066 98da      	CBI  0x1B,2
-                 ; 0000 0034         for (i = 10; i > 0; i--) { // Countdown from 10 to 1
-000067 e01a      	LDI  R17,LOW(10)
-                 _0x10:
-000068 3011      	CPI  R17,1
-000069 f018      	BRLO _0x11
-                 ; 0000 0035             tens = i / 10; // Tens digit
-00006a d016      	RCALL SUBOPT_0x0
-                 ; 0000 0036             ones = i % 10; // Units digit
-                 ; 0000 0037             display_number(ones, 1); // Display units on the first 7-segment
-                 ; 0000 0038             display_number(tens, 2); // Display tens on the second 7-segment
-                 ; 0000 0039             delay_ms(1000); // 1-second delay
-                 ; 0000 003A         }
-00006b 5011      	SUBI R17,1
-00006c cffb      	RJMP _0x10
-                 _0x11:
-                 ; 0000 003B 
-                 ; 0000 003C         // Green state (10 seconds)
-                 ; 0000 003D         RED_LED = 0;    // Turn off the red LED
-00006d 98d8      	CBI  0x1B,0
-                 ; 0000 003E         YELLOW_LED = 0; // Turn off the yellow LED
-00006e 98d9      	CBI  0x1B,1
-                 ; 0000 003F         GREEN_LED = 1;  // Turn on the green LED
-00006f 9ada      	SBI  0x1B,2
-                 ; 0000 0040         for (i = 10; i > 0; i--) { // Countdown from 10 to 1
-000070 e01a      	LDI  R17,LOW(10)
-                 _0x19:
-000071 3011      	CPI  R17,1
-000072 f018      	BRLO _0x1A
-                 ; 0000 0041             tens = i / 10; // Tens digit
-000073 d00d      	RCALL SUBOPT_0x0
-                 ; 0000 0042             ones = i % 10; // Units digit
-                 ; 0000 0043             display_number(ones, 1); // Display units on the first 7-segment
-                 ; 0000 0044             display_number(tens, 2); // Display tens on the second 7-segment
-                 ; 0000 0045             delay_ms(1000); // 1-second delay
-                 ; 0000 0046         }
-000074 5011      	SUBI R17,1
-000075 cffb      	RJMP _0x19
-                 _0x1A:
-                 ; 0000 0047 
-                 ; 0000 0048         // Yellow state (3 seconds)
-                 ; 0000 0049         RED_LED = 0;    // Turn off the red LED
-000076 98d8      	CBI  0x1B,0
-                 ; 0000 004A         YELLOW_LED = 1; // Turn on the yellow LED
-000077 9ad9      	SBI  0x1B,1
-                 ; 0000 004B         GREEN_LED = 0;  // Turn off the green LED
-000078 98da      	CBI  0x1B,2
-                 ; 0000 004C         for (i = 3; i > 0; i--) { // Countdown from 3 to 1
-000079 e013      	LDI  R17,LOW(3)
-                 _0x22:
-00007a 3011      	CPI  R17,1
-00007b f018      	BRLO _0x23
-                 ; 0000 004D             tens = i / 10; // Tens digit
-00007c d004      	RCALL SUBOPT_0x0
-                 ; 0000 004E             ones = i % 10; // Units digit
-                 ; 0000 004F             display_number(ones, 1); // Display units on the first 7-segment
-                 ; 0000 0050             display_number(tens, 2); // Display tens on the second 7-segment
-                 ; 0000 0051             delay_ms(1000); // 1-second delay
-                 ; 0000 0052         }
-00007d 5011      	SUBI R17,1
-00007e cffb      	RJMP _0x22
-                 _0x23:
-                 ; 0000 0053     }
-00007f cfe4      	RJMP _0x6
-                 ; 0000 0054 }
-                 _0x24:
-000080 cfff      	RJMP _0x24
+0000b3 efef      	LDI  R30,LOW(255)
+0000b4 bbea      	OUT  0x1A,R30
+                 ; 0000 006D     DDRC = 0xFF; // Port C as output for the first 7-segment (units)
+0000b5 bbe4      	OUT  0x14,R30
+                 ; 0000 006E     DDRD = 0xFF; // Port D as output for the second 7-segment (tens)
+0000b6 bbe1      	OUT  0x11,R30
+                 ; 0000 006F     DDRB = 0x00; // Port B as input for buttons and mode switch
+0000b7 e0e0      	LDI  R30,LOW(0)
+0000b8 bbe7      	OUT  0x17,R30
+                 ; 0000 0070 
+                 ; 0000 0071     while (1) {
+                 _0x1E:
+                 ; 0000 0072         // Check mode switch
+                 ; 0000 0073         if (MODE_SWITCH_1 == 1) {
+0000b9 9bb3      	SBIS 0x16,3
+0000ba c022      	RJMP _0x21
+                 ; 0000 0074             // Mode 1: Normal operation
+                 ; 0000 0075             // Red state
+                 ; 0000 0076             RED_LED = 1;    // Turn on the red LED
+0000bb 9ad8      	SBI  0x1B,0
+                 ; 0000 0077             YELLOW_LED = 0; // Turn off the yellow LED
+0000bc 98d9      	CBI  0x1B,1
+                 ; 0000 0078             GREEN_LED = 0;  // Turn off the green LED
+0000bd 98da      	CBI  0x1B,2
+                 ; 0000 0079             for (i = red_time; i > 0; i--) { // Countdown from red_time to 1
+0000be 2d15      	MOV  R17,R5
+                 _0x29:
+0000bf 3011      	CPI  R17,1
+0000c0 f028      	BRLO _0x2A
+                 ; 0000 007A                 if (MODE_SWITCH_2 == 1) break; // Exit if mode switch changes
+0000c1 99b4      	SBIC 0x16,4
+0000c2 c003      	RJMP _0x2A
+                 ; 0000 007B                 tens = i / 10; // Tens digit
+0000c3 d032      	RCALL SUBOPT_0x3
+                 ; 0000 007C                 ones = i % 10; // Units digit
+                 ; 0000 007D                 display_number(ones, 1); // Display units on the first 7-segment
+                 ; 0000 007E                 display_number(tens, 2); // Display tens on the second 7-segment
+                 ; 0000 007F                 delay_ms(1000); // 1-second delay
+                 ; 0000 0080             }
+0000c4 5011      	SUBI R17,1
+0000c5 cff9      	RJMP _0x29
+                 _0x2A:
+                 ; 0000 0081 
+                 ; 0000 0082             // Green state
+                 ; 0000 0083             RED_LED = 0;    // Turn off the red LED
+0000c6 98d8      	CBI  0x1B,0
+                 ; 0000 0084             YELLOW_LED = 0; // Turn off the yellow LED
+0000c7 98d9      	CBI  0x1B,1
+                 ; 0000 0085             GREEN_LED = 1;  // Turn on the green LED
+0000c8 9ada      	SBI  0x1B,2
+                 ; 0000 0086             for (i = green_time; i > 0; i--) { // Countdown from green_time to 1
+0000c9 2d14      	MOV  R17,R4
+                 _0x33:
+0000ca 3011      	CPI  R17,1
+0000cb f028      	BRLO _0x34
+                 ; 0000 0087                 if (MODE_SWITCH_2 == 1) break; // Exit if mode switch changes
+0000cc 99b4      	SBIC 0x16,4
+0000cd c003      	RJMP _0x34
+                 ; 0000 0088                 tens = i / 10; // Tens digit
+0000ce d027      	RCALL SUBOPT_0x3
+                 ; 0000 0089                 ones = i % 10; // Units digit
+                 ; 0000 008A                 display_number(ones, 1); // Display units on the first 7-segment
+                 ; 0000 008B                 display_number(tens, 2); // Display tens on the second 7-segment
+                 ; 0000 008C                 delay_ms(1000); // 1-second delay
+                 ; 0000 008D             }
+0000cf 5011      	SUBI R17,1
+0000d0 cff9      	RJMP _0x33
+                 _0x34:
+                 ; 0000 008E 
+                 ; 0000 008F             // Yellow state
+                 ; 0000 0090             RED_LED = 0;    // Turn off the red LED
+0000d1 98d8      	CBI  0x1B,0
+                 ; 0000 0091             YELLOW_LED = 1; // Turn on the yellow LED
+0000d2 9ad9      	SBI  0x1B,1
+                 ; 0000 0092             GREEN_LED = 0;  // Turn off the green LED
+0000d3 98da      	CBI  0x1B,2
+                 ; 0000 0093             for (i = yellow_time; i > 0; i--) { // Countdown from yellow_time to 1
+0000d4 2d17      	MOV  R17,R7
+                 _0x3D:
+0000d5 3011      	CPI  R17,1
+0000d6 f028      	BRLO _0x3E
+                 ; 0000 0094                 if (MODE_SWITCH_2 == 1) break; // Exit if mode switch changes
+0000d7 99b4      	SBIC 0x16,4
+0000d8 c003      	RJMP _0x3E
+                 ; 0000 0095                 tens = i / 10; // Tens digit
+0000d9 d01c      	RCALL SUBOPT_0x3
+                 ; 0000 0096                 ones = i % 10; // Units digit
+                 ; 0000 0097                 display_number(ones, 1); // Display units on the first 7-segment
+                 ; 0000 0098                 display_number(tens, 2); // Display tens on the second 7-segment
+                 ; 0000 0099                 delay_ms(1000); // 1-second delay
+                 ; 0000 009A             }
+0000da 5011      	SUBI R17,1
+0000db cff9      	RJMP _0x3D
+                 _0x3E:
+                 ; 0000 009B         } else if (MODE_SWITCH_2 == 1) {
+0000dc c002      	RJMP _0x40
+                 _0x21:
+0000dd 99b4      	SBIC 0x16,4
+                 ; 0000 009C             // Mode 2: Time adjustment
+                 ; 0000 009D             time_adjustment_mode();
+0000de dfaa      	RCALL _time_adjustment_mode
+                 ; 0000 009E         }
+                 ; 0000 009F     }
+                 _0x40:
+0000df cfd9      	RJMP _0x1E
+                 ; 0000 00A0 }
+                 _0x42:
+0000e0 cfff      	RJMP _0x42
                  ; .FEND
                  
                  	.CSEG
-                 ;OPTIMIZER ADDED SUBROUTINE, CALLED 3 TIMES, CODE SIZE REDUCTION:45 WORDS
+                 ;OPTIMIZER ADDED SUBROUTINE, CALLED 3 TIMES, CODE SIZE REDUCTION:11 WORDS
                  SUBOPT_0x0:
-000081 2fa1      	MOV  R26,R17
-000082 e0b0      	LDI  R27,0
-000083 e0ea      	LDI  R30,LOW(10)
-000084 e0f0      	LDI  R31,HIGH(10)
-000085 940e 00ba 	CALL __DIVW21
-000087 2f0e      	MOV  R16,R30
-000088 2fa1      	MOV  R26,R17
-000089 27bb      	CLR  R27
-00008a e0ea      	LDI  R30,LOW(10)
-00008b e0f0      	LDI  R31,HIGH(10)
-00008c 940e 00bf 	CALL __MODW21
-00008e 2f3e      	MOV  R19,R30
-00008f 933a      	ST   -Y,R19
-000090 e0a1      	LDI  R26,LOW(1)
-000091 dfb8      	RCALL _display_number
-000092 930a      	ST   -Y,R16
-000093 e0a2      	LDI  R26,LOW(2)
-000094 dfb5      	RCALL _display_number
-000095 eea8      	LDI  R26,LOW(1000)
-000096 e0b3      	LDI  R27,HIGH(1000)
-000097 940c 0099 	JMP  _delay_ms
+0000e1 27bb      	CLR  R27
+0000e2 e0ea      	LDI  R30,LOW(10)
+0000e3 e0f0      	LDI  R31,HIGH(10)
+0000e4 940e 0134 	CALL __MODW21
+0000e6 93ea      	ST   -Y,R30
+0000e7 e0a1      	LDI  R26,LOW(1)
+0000e8 cf79      	RJMP _display_number
+                 
+                 ;OPTIMIZER ADDED SUBROUTINE, CALLED 3 TIMES, CODE SIZE REDUCTION:11 WORDS
+                 SUBOPT_0x1:
+0000e9 e0b0      	LDI  R27,0
+0000ea e0ea      	LDI  R30,LOW(10)
+0000eb e0f0      	LDI  R31,HIGH(10)
+0000ec 940e 012f 	CALL __DIVW21
+0000ee 93ea      	ST   -Y,R30
+0000ef e0a2      	LDI  R26,LOW(2)
+0000f0 cf71      	RJMP _display_number
+                 
+                 ;OPTIMIZER ADDED SUBROUTINE, CALLED 3 TIMES, CODE SIZE REDUCTION:5 WORDS
+                 SUBOPT_0x2:
+0000f1 df85      	RCALL _increase_time
+0000f2 e2ac      	LDI  R26,LOW(300)
+0000f3 e0b1      	LDI  R27,HIGH(300)
+0000f4 940c 010e 	JMP  _delay_ms
+                 
+                 ;OPTIMIZER ADDED SUBROUTINE, CALLED 3 TIMES, CODE SIZE REDUCTION:45 WORDS
+                 SUBOPT_0x3:
+0000f6 2fa1      	MOV  R26,R17
+0000f7 e0b0      	LDI  R27,0
+0000f8 e0ea      	LDI  R30,LOW(10)
+0000f9 e0f0      	LDI  R31,HIGH(10)
+0000fa 940e 012f 	CALL __DIVW21
+0000fc 2f0e      	MOV  R16,R30
+0000fd 2fa1      	MOV  R26,R17
+0000fe 27bb      	CLR  R27
+0000ff e0ea      	LDI  R30,LOW(10)
+000100 e0f0      	LDI  R31,HIGH(10)
+000101 940e 0134 	CALL __MODW21
+000103 2f3e      	MOV  R19,R30
+000104 933a      	ST   -Y,R19
+000105 e0a1      	LDI  R26,LOW(1)
+000106 df5b      	RCALL _display_number
+000107 930a      	ST   -Y,R16
+000108 e0a2      	LDI  R26,LOW(2)
+000109 df58      	RCALL _display_number
+00010a eea8      	LDI  R26,LOW(1000)
+00010b e0b3      	LDI  R27,HIGH(1000)
+00010c 940c 010e 	JMP  _delay_ms
                  
                  
                  	.CSEG
                  _delay_ms:
-000099 9610      	adiw r26,0
-00009a f039      	breq __delay_ms1
+00010e 9610      	adiw r26,0
+00010f f039      	breq __delay_ms1
                  __delay_ms0:
                 +
-00009b ed80     +LDI R24 , LOW ( 0x7D0 )
-00009c e097     +LDI R25 , HIGH ( 0x7D0 )
+000110 ed80     +LDI R24 , LOW ( 0x7D0 )
+000111 e097     +LDI R25 , HIGH ( 0x7D0 )
                 +__DELAY_USW_LOOP :
-00009d 9701     +SBIW R24 , 1
-00009e f7f1     +BRNE __DELAY_USW_LOOP
+000112 9701     +SBIW R24 , 1
+000113 f7f1     +BRNE __DELAY_USW_LOOP
                  	__DELAY_USW 0x7D0
-00009f 95a8      	wdr
-0000a0 9711      	sbiw r26,1
-0000a1 f7c9      	brne __delay_ms0
+000114 95a8      	wdr
+000115 9711      	sbiw r26,1
+000116 f7c9      	brne __delay_ms0
                  __delay_ms1:
-0000a2 9508      	ret
+000117 9508      	ret
                  
                  __ANEGW1:
-0000a3 95f1      	NEG  R31
-0000a4 95e1      	NEG  R30
-0000a5 40f0      	SBCI R31,0
-0000a6 9508      	RET
+000118 95f1      	NEG  R31
+000119 95e1      	NEG  R30
+00011a 40f0      	SBCI R31,0
+00011b 9508      	RET
                  
                  __DIVW21U:
-0000a7 2400      	CLR  R0
-0000a8 2411      	CLR  R1
-0000a9 e190      	LDI  R25,16
+00011c 2400      	CLR  R0
+00011d 2411      	CLR  R1
+00011e e190      	LDI  R25,16
                  __DIVW21U1:
-0000aa 0faa      	LSL  R26
-0000ab 1fbb      	ROL  R27
-0000ac 1c00      	ROL  R0
-0000ad 1c11      	ROL  R1
-0000ae 1a0e      	SUB  R0,R30
-0000af 0a1f      	SBC  R1,R31
-0000b0 f418      	BRCC __DIVW21U2
-0000b1 0e0e      	ADD  R0,R30
-0000b2 1e1f      	ADC  R1,R31
-0000b3 c001      	RJMP __DIVW21U3
+00011f 0faa      	LSL  R26
+000120 1fbb      	ROL  R27
+000121 1c00      	ROL  R0
+000122 1c11      	ROL  R1
+000123 1a0e      	SUB  R0,R30
+000124 0a1f      	SBC  R1,R31
+000125 f418      	BRCC __DIVW21U2
+000126 0e0e      	ADD  R0,R30
+000127 1e1f      	ADC  R1,R31
+000128 c001      	RJMP __DIVW21U3
                  __DIVW21U2:
-0000b4 60a1      	SBR  R26,1
+000129 60a1      	SBR  R26,1
                  __DIVW21U3:
-0000b5 959a      	DEC  R25
-0000b6 f799      	BRNE __DIVW21U1
-0000b7 01fd      	MOVW R30,R26
-0000b8 01d0      	MOVW R26,R0
-0000b9 9508      	RET
+00012a 959a      	DEC  R25
+00012b f799      	BRNE __DIVW21U1
+00012c 01fd      	MOVW R30,R26
+00012d 01d0      	MOVW R26,R0
+00012e 9508      	RET
                  
                  __DIVW21:
-0000ba d012      	RCALL __CHKSIGNW
-0000bb dfeb      	RCALL __DIVW21U
-0000bc f40e      	BRTC __DIVW211
-0000bd dfe5      	RCALL __ANEGW1
+00012f d012      	RCALL __CHKSIGNW
+000130 dfeb      	RCALL __DIVW21U
+000131 f40e      	BRTC __DIVW211
+000132 dfe5      	RCALL __ANEGW1
                  __DIVW211:
-0000be 9508      	RET
+000133 9508      	RET
                  
                  __MODW21:
-0000bf 94e8      	CLT
-0000c0 ffb7      	SBRS R27,7
-0000c1 c004      	RJMP __MODW211
-0000c2 95a0      	COM  R26
-0000c3 95b0      	COM  R27
-0000c4 9611      	ADIW R26,1
-0000c5 9468      	SET
+000134 94e8      	CLT
+000135 ffb7      	SBRS R27,7
+000136 c004      	RJMP __MODW211
+000137 95a0      	COM  R26
+000138 95b0      	COM  R27
+000139 9611      	ADIW R26,1
+00013a 9468      	SET
                  __MODW211:
-0000c6 fdf7      	SBRC R31,7
-0000c7 dfdb      	RCALL __ANEGW1
-0000c8 dfde      	RCALL __DIVW21U
-0000c9 01fd      	MOVW R30,R26
-0000ca f40e      	BRTC __MODW212
-0000cb dfd7      	RCALL __ANEGW1
+00013b fdf7      	SBRC R31,7
+00013c dfdb      	RCALL __ANEGW1
+00013d dfde      	RCALL __DIVW21U
+00013e 01fd      	MOVW R30,R26
+00013f f40e      	BRTC __MODW212
+000140 dfd7      	RCALL __ANEGW1
                  __MODW212:
-0000cc 9508      	RET
+000141 9508      	RET
                  
                  __CHKSIGNW:
-0000cd 94e8      	CLT
-0000ce fff7      	SBRS R31,7
-0000cf c002      	RJMP __CHKSW1
-0000d0 dfd2      	RCALL __ANEGW1
-0000d1 9468      	SET
+000142 94e8      	CLT
+000143 fff7      	SBRS R31,7
+000144 c002      	RJMP __CHKSW1
+000145 dfd2      	RCALL __ANEGW1
+000146 9468      	SET
                  __CHKSW1:
-0000d2 ffb7      	SBRS R27,7
-0000d3 c006      	RJMP __CHKSW2
-0000d4 95a0      	COM  R26
-0000d5 95b0      	COM  R27
-0000d6 9611      	ADIW R26,1
-0000d7 f800      	BLD  R0,0
-0000d8 9403      	INC  R0
-0000d9 fa00      	BST  R0,0
+000147 ffb7      	SBRS R27,7
+000148 c006      	RJMP __CHKSW2
+000149 95a0      	COM  R26
+00014a 95b0      	COM  R27
+00014b 9611      	ADIW R26,1
+00014c f800      	BLD  R0,0
+00014d 9403      	INC  R0
+00014e fa00      	BST  R0,0
                  __CHKSW2:
-0000da 9508      	RET
+00014f 9508      	RET
                  
                  ;END OF CODE MARKER
                  __END_OF_CODE:
@@ -1487,41 +1731,41 @@ counted separately from r26..r31 here.
 .dseg memory usage only counts static data declared with .byte
 
 ATmega32 register use summary:
-r0 :  12 r1 :   4 r2 :   0 r3 :   0 r4 :   0 r5 :   0 r6 :   0 r7 :   0 
+r0 :  16 r1 :   5 r2 :   0 r3 :   0 r4 :   3 r5 :   3 r6 :   0 r7 :   3 
 r8 :   0 r9 :   0 r10:   0 r11:   0 r12:   0 r13:   0 r14:   0 r15:   0 
-r16:   2 r17:  11 r18:   0 r19:   2 r20:   0 r21:   0 r22:   0 r23:   0 
-r24:   6 r25:   4 r26:  23 r27:   9 r28:   2 r29:   1 r30:  27 r31:  14 
-x  :   2 y  :   7 z  :   2 
-Registers used: 16 out of 35 (45.7%)
+r16:   2 r17:  11 r18:   0 r19:   2 r20:   0 r21:   0 r22:   2 r23:   0 
+r24:   9 r25:   5 r26:  42 r27:  20 r28:   2 r29:   1 r30:  41 r31:  17 
+x  :   6 y  :  17 z  :   9 
+Registers used: 20 out of 35 (57.1%)
 
 ATmega32 instruction use summary:
 .lds  :   0 .lds.l:   0 .sts  :   0 .sts.l:   0 adc   :   1 add   :   1 
 adiw  :   4 and   :   0 andi  :   0 asr   :   0 bclr  :   0 bld   :   1 
-brbc  :   0 brbs  :   0 brcc  :   1 brcs  :   0 break :   0 breq  :   1 
+brbc  :   0 brbs  :   0 brcc  :   1 brcs  :   0 break :   0 breq  :   2 
 brge  :   0 brhc  :   0 brhs  :   0 brid  :   0 brie  :   0 brlo  :   3 
-brlt  :   0 brmi  :   0 brne  :   7 brpl  :   0 brsh  :   0 brtc  :   2 
-brts  :   0 brvc  :   0 brvs  :   0 bset  :   0 bst   :   1 call  :   2 
-cbi   :   6 cbr   :   0 clc   :   0 clh   :   0 cli   :   1 cln   :   0 
-clr   :   5 cls   :   0 clt   :   2 clv   :   0 clz   :   0 com   :   4 
-cp    :   0 cpc   :   0 cpi   :   5 cpse  :   0 dec   :   2 des   :   0 
+brlt  :   0 brmi  :   0 brne  :   8 brpl  :   0 brsh  :   1 brtc  :   2 
+brts  :   0 brvc  :   0 brvs  :   0 bset  :   0 bst   :   1 call  :   4 
+cbi   :   9 cbr   :   0 clc   :   0 clh   :   0 cli   :   1 cln   :   0 
+clr   :   6 cls   :   0 clt   :   2 clv   :   0 clz   :   0 com   :   4 
+cp    :   0 cpc   :   0 cpi   :   6 cpse  :   0 dec   :   2 des   :   0 
 eor   :   0 fmul  :   0 fmuls :   0 fmulsu:   0 icall :   0 ijmp  :   0 
-in    :   0 inc   :   1 jmp   :  23 ld    :   2 ldd   :   2 ldi   :  28 
-lds   :   0 lpm   :   4 lsl   :   1 lsr   :   0 mov   :   4 movw  :   3 
+in    :   0 inc   :   1 jmp   :  24 ld    :   7 ldd   :   5 ldi   :  44 
+lds   :   0 lpm   :  11 lsl   :   1 lsr   :   0 mov   :  13 movw  :   6 
 mul   :   0 muls  :   0 mulsu :   0 neg   :   2 nop   :   0 or    :   0 
-ori   :   0 out   :  11 pop   :   0 push  :   0 rcall :  12 ret   :   7 
-reti  :   0 rjmp  :  10 rol   :   3 ror   :   0 sbc   :   1 sbci  :   3 
-sbi   :   3 sbic  :   0 sbis  :   0 sbiw  :   3 sbr   :   1 sbrc  :   1 
+ori   :   0 out   :  12 pop   :   0 push  :   0 rcall :  23 ret   :   8 
+reti  :   0 rjmp  :  29 rol   :   3 ror   :   0 sbc   :   1 sbci  :   3 
+sbi   :   3 sbic  :   8 sbis  :   5 sbiw  :   5 sbr   :   1 sbrc  :   1 
 sbrs  :   3 sec   :   0 seh   :   0 sei   :   0 sen   :   0 ser   :   0 
 ses   :   0 set   :   2 sev   :   0 sez   :   0 sleep :   0 spm   :   0 
-st    :   5 std   :   0 sts   :   0 sub   :   1 subi  :   5 swap  :   0 
+st    :  11 std   :   0 sts   :   0 sub   :   1 subi  :   6 swap  :   0 
 tst   :   0 wdr   :   1 
-Instructions used: 45 out of 116 (38.8%)
+Instructions used: 48 out of 116 (41.4%)
 
 ATmega32 memory use summary [bytes]:
 Segment   Begin    End      Code   Data   Used    Size   Use%
 ---------------------------------------------------------------
-[.cseg] 0x000000 0x0001b6    428     10    438   32768   1.3%
+[.cseg] 0x000000 0x0002a0    650     22    672   32768   2.1%
 [.dseg] 0x000060 0x000260      0      0      0    2048   0.0%
 [.eseg] 0x000000 0x000000      0      0      0    1024   0.0%
 
-Assembly complete, 0 errors, 0 warnings
+Assembly complete, 0 errors, 3 warnings

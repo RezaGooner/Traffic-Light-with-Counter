@@ -9,9 +9,14 @@ Variable                                                                        
 Register Allocation
 Variable                                                                          Register  Size
 ------------------------------------------------------------------------------------------------
+red_time                                                                          R5           1
+green_time                                                                        R4           1
+yellow_time                                                                       R7           1
 
 FLASH Allocation [words]
 Function                                                                          Address   Size
 ------------------------------------------------------------------------------------------------
-display_number                                                                    0x0004A     22
-main                                                                              0x00060     33
+display_number                                                                    0x00062     21
+increase_time                                                                     0x00077     18
+time_adjustment_mode                                                              0x00089     42
+main                                                                              0x000B3     46

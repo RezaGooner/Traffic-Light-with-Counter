@@ -1084,6 +1084,11 @@ __DELAY_USW_LOOP:
 	ADD  R31,R0
 	.ENDM
 
+;NAME DEFINITIONS FOR GLOBAL VARIABLES ALLOCATED TO REGISTERS
+	.DEF _red_time=R5
+	.DEF _green_time=R4
+	.DEF _yellow_time=R7
+
 	.CSEG
 	.ORG 0x00
 
@@ -1117,6 +1122,21 @@ _segment_numbers:
 	.DB  0xC0,0xF9,0xA4,0xB0,0x99,0x92,0x82,0xF8
 	.DB  0x80,0x90
 
+;GLOBAL REGISTER VARIABLES INITIALIZATION
+__REG_VARS:
+	.DB  0xA,0xA,0x0,0x3
+
+
+__GLOBAL_INI_TBL:
+	.DW  0x04
+	.DW  0x04
+	.DW  __REG_VARS*2
+
+_0xFFFFFFFF:
+	.DW  0
+
+#define __GLOBAL_INI_TBL_PRESENT 1
+
 __RESET:
 	CLI
 	CLR  R30
@@ -1146,6 +1166,29 @@ __CLEAR_SRAM:
 	ST   X+,R30
 	SBIW R24,1
 	BRNE __CLEAR_SRAM
+
+;GLOBAL VARIABLES INITIALIZATION
+	LDI  R30,LOW(__GLOBAL_INI_TBL*2)
+	LDI  R31,HIGH(__GLOBAL_INI_TBL*2)
+__GLOBAL_INI_NEXT:
+	LPM  R24,Z+
+	LPM  R25,Z+
+	SBIW R24,0
+	BREQ __GLOBAL_INI_END
+	LPM  R26,Z+
+	LPM  R27,Z+
+	LPM  R0,Z+
+	LPM  R1,Z+
+	MOVW R22,R30
+	MOVW R30,R0
+__GLOBAL_INI_LOOP:
+	LPM  R0,Z+
+	ST   X+,R0
+	SBIW R24,1
+	BRNE __GLOBAL_INI_LOOP
+	MOVW R30,R22
+	RJMP __GLOBAL_INI_NEXT
+__GLOBAL_INI_END:
 
 ;HARDWARE STACK POINTER INITIALIZATION
 	LDI  R30,LOW(__SRAM_END-__HEAP_SIZE)
@@ -1191,6 +1234,20 @@ __CLEAR_SRAM:
 ;#define SEGMENT_DDR_1  DDRC
 ;#define SEGMENT_DDR_2  DDRD
 ;
+;// Define pins for buttons
+;#define RED_BUTTON    PINB.0  // Use PINB for reading button state
+;#define GREEN_BUTTON  PINB.1  // Use PINB for reading button state
+;#define YELLOW_BUTTON PINB.2  // Use PINB for reading button state
+;
+;// Define pins for mode switch
+;#define MODE_SWITCH_1 PINB.3  // Mode 1: Normal operation
+;#define MODE_SWITCH_2 PINB.4  // Mode 2: Time adjustment
+;
+;// Define variables for traffic light timings
+;unsigned char red_time = 10;    // Default red time
+;unsigned char green_time = 10;  // Default green time
+;unsigned char yellow_time = 3;  // Default yellow time
+;
 ;// Define numbers for 7-segment display (Common Anode)
 ;const unsigned char segment_numbers[] = {
 ;    0b11000000, // 0
@@ -1207,145 +1264,328 @@ __CLEAR_SRAM:
 ;
 ;// Function to display a number on the 7-segment
 ;void display_number(unsigned char number, unsigned char segment_port) {
-; 0000 001E void display_number(unsigned char number, unsigned char segment_port) {
+; 0000 002C void display_number(unsigned char number, unsigned char segment_port) {
 
 	.CSEG
 _display_number:
 ; .FSTART _display_number
-; 0000 001F     if (segment_port == 1) {
+; 0000 002D     if (segment_port == 1) {
 	ST   -Y,R26
 ;	number -> Y+1
 ;	segment_port -> Y+0
 	LD   R26,Y
 	CPI  R26,LOW(0x1)
 	BRNE _0x3
-; 0000 0020         SEGMENT_PORT_1 = segment_numbers[number];
+; 0000 002E         SEGMENT_PORT_1 = segment_numbers[number];
 	LDD  R30,Y+1
 	LDI  R31,0
 	SUBI R30,LOW(-_segment_numbers*2)
 	SBCI R31,HIGH(-_segment_numbers*2)
 	LPM  R0,Z
 	OUT  0x15,R0
-; 0000 0021     } else if (segment_port == 2) {
+; 0000 002F     } else if (segment_port == 2) {
 	RJMP _0x4
 _0x3:
 	LD   R26,Y
 	CPI  R26,LOW(0x2)
 	BRNE _0x5
-; 0000 0022         SEGMENT_PORT_2 = segment_numbers[number];
+; 0000 0030         SEGMENT_PORT_2 = segment_numbers[number];
 	LDD  R30,Y+1
 	LDI  R31,0
 	SUBI R30,LOW(-_segment_numbers*2)
 	SBCI R31,HIGH(-_segment_numbers*2)
 	LPM  R0,Z
 	OUT  0x12,R0
-; 0000 0023     }
-; 0000 0024 }
+; 0000 0031     }
+; 0000 0032 }
 _0x5:
 _0x4:
+	RJMP _0x2000001
+; .FEND
+;
+;// Function to increase the time for a specific light
+;void increase_time(unsigned char *time) {
+; 0000 0035 void increase_time(unsigned char *time) {
+_increase_time:
+; .FSTART _increase_time
+; 0000 0036     if (*time < 99) {
+	ST   -Y,R27
+	ST   -Y,R26
+;	*time -> Y+0
+	LD   R26,Y
+	LDD  R27,Y+1
+	LD   R26,X
+	CPI  R26,LOW(0x63)
+	BRSH _0x6
+; 0000 0037         (*time)++; // Increase time
+	LD   R26,Y
+	LDD  R27,Y+1
+	LD   R30,X
+	SUBI R30,-LOW(1)
+	RJMP _0x43
+; 0000 0038     } else {
+_0x6:
+; 0000 0039         *time = 1; // Reset to 1 if time reaches 99
+	LD   R26,Y
+	LDD  R27,Y+1
+	LDI  R30,LOW(1)
+_0x43:
+	ST   X,R30
+; 0000 003A     }
+; 0000 003B }
+_0x2000001:
 	ADIW R28,2
 	RET
 ; .FEND
 ;
+;// Function to handle time adjustment mode
+;void time_adjustment_mode() {
+; 0000 003E void time_adjustment_mode() {
+_time_adjustment_mode:
+; .FSTART _time_adjustment_mode
+; 0000 003F     // Turn off all traffic lights
+; 0000 0040     RED_LED = 0;
+	CBI  0x1B,0
+; 0000 0041     YELLOW_LED = 0;
+	CBI  0x1B,1
+; 0000 0042     GREEN_LED = 0;
+	CBI  0x1B,2
+; 0000 0043 
+; 0000 0044     while (MODE_SWITCH_2 == 1) {
+_0xE:
+	SBIS 0x16,4
+	RJMP _0x10
+; 0000 0045         // Adjust red time
+; 0000 0046         display_number(red_time % 10, 1); // Display units
+	MOV  R26,R5
+	RCALL SUBOPT_0x0
+; 0000 0047         display_number(red_time / 10, 2); // Display tens
+	MOV  R26,R5
+	RCALL SUBOPT_0x1
+; 0000 0048         if (RED_BUTTON == 1) {
+	SBIS 0x16,0
+	RJMP _0x11
+; 0000 0049             increase_time(&red_time); // Increase red time
+	LDI  R26,LOW(5)
+	LDI  R27,HIGH(5)
+	RCALL SUBOPT_0x2
+; 0000 004A             delay_ms(300); // Debounce delay
+; 0000 004B             while (RED_BUTTON == 1); // Wait for button release
+_0x12:
+	SBIC 0x16,0
+	RJMP _0x12
+; 0000 004C         }
+; 0000 004D 
+; 0000 004E         // Adjust green time
+; 0000 004F         display_number(green_time % 10, 1); // Display units
+_0x11:
+	MOV  R26,R4
+	RCALL SUBOPT_0x0
+; 0000 0050         display_number(green_time / 10, 2); // Display tens
+	MOV  R26,R4
+	RCALL SUBOPT_0x1
+; 0000 0051         if (GREEN_BUTTON == 1) {
+	SBIS 0x16,1
+	RJMP _0x15
+; 0000 0052             increase_time(&green_time); // Increase green time
+	LDI  R26,LOW(4)
+	LDI  R27,HIGH(4)
+	RCALL SUBOPT_0x2
+; 0000 0053             delay_ms(300); // Debounce delay
+; 0000 0054             while (GREEN_BUTTON == 1); // Wait for button release
+_0x16:
+	SBIC 0x16,1
+	RJMP _0x16
+; 0000 0055         }
+; 0000 0056 
+; 0000 0057         // Adjust yellow time
+; 0000 0058         display_number(yellow_time % 10, 1); // Display units
+_0x15:
+	MOV  R26,R7
+	RCALL SUBOPT_0x0
+; 0000 0059         display_number(yellow_time / 10, 2); // Display tens
+	MOV  R26,R7
+	RCALL SUBOPT_0x1
+; 0000 005A         if (YELLOW_BUTTON == 1) {
+	SBIS 0x16,2
+	RJMP _0x19
+; 0000 005B             increase_time(&yellow_time); // Increase yellow time
+	LDI  R26,LOW(7)
+	LDI  R27,HIGH(7)
+	RCALL SUBOPT_0x2
+; 0000 005C             delay_ms(300); // Debounce delay
+; 0000 005D             while (YELLOW_BUTTON == 1); // Wait for button release
+_0x1A:
+	SBIC 0x16,2
+	RJMP _0x1A
+; 0000 005E         }
+; 0000 005F 
+; 0000 0060         // Check if mode switch is changed to normal mode
+; 0000 0061         if (MODE_SWITCH_1 == 1) {
+_0x19:
+	SBIC 0x16,3
+; 0000 0062             break; // Exit time adjustment mode
+	RJMP _0x10
+; 0000 0063         }
+; 0000 0064     }
+	RJMP _0xE
+_0x10:
+; 0000 0065 }
+	RET
+; .FEND
+;
 ;void main(void) {
-; 0000 0026 void main(void) {
+; 0000 0067 void main(void) {
 _main:
 ; .FSTART _main
-; 0000 0027     // Define all nedded variables at the beginning of the function
-; 0000 0028     unsigned char i, tens, ones;
-; 0000 0029 
-; 0000 002A     // Configure ports
-; 0000 002B     DDRA = 0xFF; // Port A as output for traffic lights
+; 0000 0068     // Define all variables at the beginning of the function
+; 0000 0069     unsigned char i, tens, ones;
+; 0000 006A 
+; 0000 006B     // Configure ports
+; 0000 006C     DDRA = 0xFF; // Port A as output for traffic lights
 ;	i -> R17
 ;	tens -> R16
 ;	ones -> R19
 	LDI  R30,LOW(255)
 	OUT  0x1A,R30
-; 0000 002C     DDRC = 0xFF; // Port C as output for the first 7-segment (units)
+; 0000 006D     DDRC = 0xFF; // Port C as output for the first 7-segment (units)
 	OUT  0x14,R30
-; 0000 002D     DDRD = 0xFF; // Port D as output for the second 7-segment (tens)
+; 0000 006E     DDRD = 0xFF; // Port D as output for the second 7-segment (tens)
 	OUT  0x11,R30
-; 0000 002E 
-; 0000 002F     while (1) {
-_0x6:
-; 0000 0030         // Red state (10 seconds)
-; 0000 0031         RED_LED = 1;    // Turn on the red LED
+; 0000 006F     DDRB = 0x00; // Port B as input for buttons and mode switch
+	LDI  R30,LOW(0)
+	OUT  0x17,R30
+; 0000 0070 
+; 0000 0071     while (1) {
+_0x1E:
+; 0000 0072         // Check mode switch
+; 0000 0073         if (MODE_SWITCH_1 == 1) {
+	SBIS 0x16,3
+	RJMP _0x21
+; 0000 0074             // Mode 1: Normal operation
+; 0000 0075             // Red state
+; 0000 0076             RED_LED = 1;    // Turn on the red LED
 	SBI  0x1B,0
-; 0000 0032         YELLOW_LED = 0; // Turn off the yellow LED
+; 0000 0077             YELLOW_LED = 0; // Turn off the yellow LED
 	CBI  0x1B,1
-; 0000 0033         GREEN_LED = 0;  // Turn off the green LED
+; 0000 0078             GREEN_LED = 0;  // Turn off the green LED
 	CBI  0x1B,2
-; 0000 0034         for (i = 10; i > 0; i--) { // Countdown from 10 to 1
-	LDI  R17,LOW(10)
-_0x10:
+; 0000 0079             for (i = red_time; i > 0; i--) { // Countdown from red_time to 1
+	MOV  R17,R5
+_0x29:
 	CPI  R17,1
-	BRLO _0x11
-; 0000 0035             tens = i / 10; // Tens digit
-	RCALL SUBOPT_0x0
-; 0000 0036             ones = i % 10; // Units digit
-; 0000 0037             display_number(ones, 1); // Display units on the first 7-segment
-; 0000 0038             display_number(tens, 2); // Display tens on the second 7-segment
-; 0000 0039             delay_ms(1000); // 1-second delay
-; 0000 003A         }
+	BRLO _0x2A
+; 0000 007A                 if (MODE_SWITCH_2 == 1) break; // Exit if mode switch changes
+	SBIC 0x16,4
+	RJMP _0x2A
+; 0000 007B                 tens = i / 10; // Tens digit
+	RCALL SUBOPT_0x3
+; 0000 007C                 ones = i % 10; // Units digit
+; 0000 007D                 display_number(ones, 1); // Display units on the first 7-segment
+; 0000 007E                 display_number(tens, 2); // Display tens on the second 7-segment
+; 0000 007F                 delay_ms(1000); // 1-second delay
+; 0000 0080             }
 	SUBI R17,1
-	RJMP _0x10
-_0x11:
-; 0000 003B 
-; 0000 003C         // Green state (10 seconds)
-; 0000 003D         RED_LED = 0;    // Turn off the red LED
+	RJMP _0x29
+_0x2A:
+; 0000 0081 
+; 0000 0082             // Green state
+; 0000 0083             RED_LED = 0;    // Turn off the red LED
 	CBI  0x1B,0
-; 0000 003E         YELLOW_LED = 0; // Turn off the yellow LED
+; 0000 0084             YELLOW_LED = 0; // Turn off the yellow LED
 	CBI  0x1B,1
-; 0000 003F         GREEN_LED = 1;  // Turn on the green LED
+; 0000 0085             GREEN_LED = 1;  // Turn on the green LED
 	SBI  0x1B,2
-; 0000 0040         for (i = 10; i > 0; i--) { // Countdown from 10 to 1
-	LDI  R17,LOW(10)
-_0x19:
+; 0000 0086             for (i = green_time; i > 0; i--) { // Countdown from green_time to 1
+	MOV  R17,R4
+_0x33:
 	CPI  R17,1
-	BRLO _0x1A
-; 0000 0041             tens = i / 10; // Tens digit
-	RCALL SUBOPT_0x0
-; 0000 0042             ones = i % 10; // Units digit
-; 0000 0043             display_number(ones, 1); // Display units on the first 7-segment
-; 0000 0044             display_number(tens, 2); // Display tens on the second 7-segment
-; 0000 0045             delay_ms(1000); // 1-second delay
-; 0000 0046         }
+	BRLO _0x34
+; 0000 0087                 if (MODE_SWITCH_2 == 1) break; // Exit if mode switch changes
+	SBIC 0x16,4
+	RJMP _0x34
+; 0000 0088                 tens = i / 10; // Tens digit
+	RCALL SUBOPT_0x3
+; 0000 0089                 ones = i % 10; // Units digit
+; 0000 008A                 display_number(ones, 1); // Display units on the first 7-segment
+; 0000 008B                 display_number(tens, 2); // Display tens on the second 7-segment
+; 0000 008C                 delay_ms(1000); // 1-second delay
+; 0000 008D             }
 	SUBI R17,1
-	RJMP _0x19
-_0x1A:
-; 0000 0047 
-; 0000 0048         // Yellow state (3 seconds)
-; 0000 0049         RED_LED = 0;    // Turn off the red LED
+	RJMP _0x33
+_0x34:
+; 0000 008E 
+; 0000 008F             // Yellow state
+; 0000 0090             RED_LED = 0;    // Turn off the red LED
 	CBI  0x1B,0
-; 0000 004A         YELLOW_LED = 1; // Turn on the yellow LED
+; 0000 0091             YELLOW_LED = 1; // Turn on the yellow LED
 	SBI  0x1B,1
-; 0000 004B         GREEN_LED = 0;  // Turn off the green LED
+; 0000 0092             GREEN_LED = 0;  // Turn off the green LED
 	CBI  0x1B,2
-; 0000 004C         for (i = 3; i > 0; i--) { // Countdown from 3 to 1
-	LDI  R17,LOW(3)
-_0x22:
+; 0000 0093             for (i = yellow_time; i > 0; i--) { // Countdown from yellow_time to 1
+	MOV  R17,R7
+_0x3D:
 	CPI  R17,1
-	BRLO _0x23
-; 0000 004D             tens = i / 10; // Tens digit
-	RCALL SUBOPT_0x0
-; 0000 004E             ones = i % 10; // Units digit
-; 0000 004F             display_number(ones, 1); // Display units on the first 7-segment
-; 0000 0050             display_number(tens, 2); // Display tens on the second 7-segment
-; 0000 0051             delay_ms(1000); // 1-second delay
-; 0000 0052         }
+	BRLO _0x3E
+; 0000 0094                 if (MODE_SWITCH_2 == 1) break; // Exit if mode switch changes
+	SBIC 0x16,4
+	RJMP _0x3E
+; 0000 0095                 tens = i / 10; // Tens digit
+	RCALL SUBOPT_0x3
+; 0000 0096                 ones = i % 10; // Units digit
+; 0000 0097                 display_number(ones, 1); // Display units on the first 7-segment
+; 0000 0098                 display_number(tens, 2); // Display tens on the second 7-segment
+; 0000 0099                 delay_ms(1000); // 1-second delay
+; 0000 009A             }
 	SUBI R17,1
-	RJMP _0x22
-_0x23:
-; 0000 0053     }
-	RJMP _0x6
-; 0000 0054 }
-_0x24:
-	RJMP _0x24
+	RJMP _0x3D
+_0x3E:
+; 0000 009B         } else if (MODE_SWITCH_2 == 1) {
+	RJMP _0x40
+_0x21:
+	SBIC 0x16,4
+; 0000 009C             // Mode 2: Time adjustment
+; 0000 009D             time_adjustment_mode();
+	RCALL _time_adjustment_mode
+; 0000 009E         }
+; 0000 009F     }
+_0x40:
+	RJMP _0x1E
+; 0000 00A0 }
+_0x42:
+	RJMP _0x42
 ; .FEND
 
 	.CSEG
-;OPTIMIZER ADDED SUBROUTINE, CALLED 3 TIMES, CODE SIZE REDUCTION:45 WORDS
+;OPTIMIZER ADDED SUBROUTINE, CALLED 3 TIMES, CODE SIZE REDUCTION:11 WORDS
 SUBOPT_0x0:
+	CLR  R27
+	LDI  R30,LOW(10)
+	LDI  R31,HIGH(10)
+	CALL __MODW21
+	ST   -Y,R30
+	LDI  R26,LOW(1)
+	RJMP _display_number
+
+;OPTIMIZER ADDED SUBROUTINE, CALLED 3 TIMES, CODE SIZE REDUCTION:11 WORDS
+SUBOPT_0x1:
+	LDI  R27,0
+	LDI  R30,LOW(10)
+	LDI  R31,HIGH(10)
+	CALL __DIVW21
+	ST   -Y,R30
+	LDI  R26,LOW(2)
+	RJMP _display_number
+
+;OPTIMIZER ADDED SUBROUTINE, CALLED 3 TIMES, CODE SIZE REDUCTION:5 WORDS
+SUBOPT_0x2:
+	RCALL _increase_time
+	LDI  R26,LOW(300)
+	LDI  R27,HIGH(300)
+	JMP  _delay_ms
+
+;OPTIMIZER ADDED SUBROUTINE, CALLED 3 TIMES, CODE SIZE REDUCTION:45 WORDS
+SUBOPT_0x3:
 	MOV  R26,R17
 	LDI  R27,0
 	LDI  R30,LOW(10)

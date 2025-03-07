@@ -16,7 +16,7 @@ This repository contains the C code and Proteus simulation files for a **Traffic
 
 ![bandicam 2025-03-07 02-40-58-368](https://github.com/user-attachments/assets/191d6322-5526-4059-bfc6-5e4605477a78)
 
-Related to previous version (without time adjustment)
+> Related to previous version (without time adjustment)
 
 ---
 ## Simulation Instructions

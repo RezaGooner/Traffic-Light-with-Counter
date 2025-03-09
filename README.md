@@ -26,9 +26,6 @@ This project implements a **traffic light system with a countdown timer** using 
 - **7-segment display (2 digits)**
 - **Push buttons** (for mode selection and time adjustment)
 - **LEDs (Red, Yellow, Green)**
-- **Resistors (for LEDs and 7-segment display)**
-- **Power Supply (5V)**
-- **Breadboard & Jumper Wires**
 
 ---
 
@@ -36,9 +33,9 @@ This project implements a **traffic light system with a countdown timer** using 
 
 | Component | ATmega32 Pin |
 |-----------|-------------|
-| **Red LED** | `PA0` |
+| **Green LED** | `PA0` |
 | **Yellow LED** | `PA1` |
-| **Green LED** | `PA2` |
+| **Red LED** | `PA2` |
 | **7-Segment (Left - Tens Place)** | `PORTD (PD0 - PD6)` |
 | **7-Segment (Right - Ones Place)** | `PORTC (PC0 - PC6)` |
 | **Normal Mode Button** | `PB0` |

@@ -1,70 +1,109 @@
-# Traffic Light Control System with Two-Digit Counter
-
-This repository contains the C code and Proteus simulation files for a **Traffic Light Control System**. The system includes three LEDs (Red, Yellow, and Green) with different timing intervals, and a **two-digit 7-segment display** that shows the countdown for each light. The timing for each light can be adjusted using buttons, making the system interactive and customizable.
 
 ---
 
-## Features
-- **Three Traffic Lights**: Red, Yellow, and Green LEDs.
-- **Two 7-Segment Display**: Displays the countdown timer for each light.
-- **Adjustable Timings**: The duration for each light can be configured using buttons.
-- **Proteus Simulation**: Fully simulated in Proteus for testing and visualization.
-- **C Code**: Written in Embedded C using CodeVisionAVR.
-- **Microcontroller**: Designed for the **ATmega32** microcontroller.
+# Traffic Light with Counter
+
+This project implements a **traffic light system with a countdown timer** using an **ATmega32 microcontroller**. The system allows normal traffic operation, adjustable red and green light durations, a police mode, and an off mode. 
+
+## 🚦 Features
+
+- **Normal Mode**: The traffic lights operate in a standard cycle (**Red → Green → Yellow**) while displaying the remaining time on a **7-segment display**.
+- **Adjustable Red Light Duration**: Users can modify the **red light duration** and see real-time updates on the **7-segment display**.
+- **Adjustable Green Light Duration**: Users can modify the **green light duration** similarly.
+- **Police Mode**: The **red light blinks**, and `"PO"` is displayed on the **7-segment display**.
+- **Off Mode**: Turns off all lights and the **7-segment display**.
 
 ---
 
-![bandicam 2025-03-07 02-40-58-368](https://github.com/user-attachments/assets/191d6322-5526-4059-bfc6-5e4605477a78)
+![ezgif-4285d246e41e0c](https://github.com/user-attachments/assets/3a3a4ce5-0db2-4413-8372-6b5b0b784bf0)
 
-> Related to previous version (without time adjustment)
+> Graphical Guide for Operating the Circuit
 
----
-## Simulation Instructions
-To simulate the project, follow these steps:
 
-1. **Open Proteus**:
-   - Load the Proteus simulation file (`TrafficLight.pdsprj`) located in the `Proteus_Simulation` folder.
+## 🛠️ Hardware Components
 
-2. **Program the Microcontroller**:
-   - Compile the C code located in the `CodeVision_C_Code` folder using **CodeVisionAVR**.
-   - The generated HEX file is located in the `Debug` folder.
-   - Program the HEX file onto the **ATmega32** microcontroller in the Proteus simulation.
-
-3. **Run the Simulation**:
-   - Start the simulation in Proteus.
-   - Observe the traffic lights and the countdown on the 7-segment display.
-   - Use the buttons to adjust the timing for each light.
+- **ATmega32** microcontroller
+- **7-segment display (2 digits)**
+- **Push buttons** (for mode selection and time adjustment)
+- **LEDs (Red, Yellow, Green)**
+- **Resistors (for LEDs and 7-segment display)**
+- **Power Supply (5V)**
+- **Breadboard & Jumper Wires**
 
 ---
 
+## 🔧 Circuit Connections
 
-## How It Works
-1. **Traffic Light Cycle**:
-   - The system cycles through the Red, Yellow, and Green lights.
-   - Each light has a predefined countdown time, which is displayed on the 7-segment display.
-
-2. **Adjustable Timings**:
-   - Buttons are used to increase or decrease the duration of each light.
-   - The updated timings are reflected in the countdown display.
-   - After finishing the setting, press the three buttons in order to apply.
-
-3. **7-Segment Display**:
-   - A two-digit 7-segment display shows the remaining time for the current light in a countdown format.
-
----
-
-## Requirements
-- **Software**:
-  - Proteus (for simulation)
-  - CodeVisionAVR (for compiling the C code)
-- **Hardware** (for real-world implementation):
-  - ATmega32 microcontroller
-  - LEDs (Red, Yellow, Green)
-  - Two 7-segment display
-  - Buttons for adjusting timings
+| Component | ATmega32 Pin |
+|-----------|-------------|
+| **Red LED** | `PA0` |
+| **Yellow LED** | `PA1` |
+| **Green LED** | `PA2` |
+| **7-Segment (Left - Tens Place)** | `PORTD (PD0 - PD6)` |
+| **7-Segment (Right - Ones Place)** | `PORTC (PC0 - PC6)` |
+| **Normal Mode Button** | `PB0` |
+| **Set Red Time Button** | `PB1` |
+| **Set Green Time Button** | `PB2` |
+| **Police Mode Button** | `PB3` |
+| **Off Button** | `PB4` |
+| **Increase Time (`Time+`)** | `PB5` |
+| **Decrease Time (`Time-`)** | `PB6` |
 
 ---
 
-## Author
-- **Reza Gooner**  
-  GitHub: [RezaGooner](https://github.com/RezaGooner)
+## 🎮 How to Use
+
+### **1️⃣ Normal Mode**
+Press the **Normal** button (`PB0`). The **traffic lights cycle normally**:  
+🔴 **Red → 🟢 Green → 🟡 Yellow**  
+The **remaining time** for each light is displayed on the **7-segment display**.
+
+---
+
+### **2️⃣ Adjusting Red Light Duration**
+1. Press **Set Red** (`PB1`) to enter red time adjustment mode.  
+   - The **red LED** turns on, and the **current red light duration** is shown on the **7-segment display**.
+2. Use **Time+ (`PB5`)** to **increase** the red light duration.  
+3. Use **Time- (`PB6`)** to **decrease** the red light duration.  
+4. To **save changes**, press any other mode button (e.g., **Normal, Police, or Set Green**).
+
+---
+
+### **3️⃣ Adjusting Green Light Duration**
+1. Press **Set Green** (`PB2`) to enter green time adjustment mode.  
+   - The **green LED** turns on, and the **current green light duration** is shown on the **7-segment display**.
+2. Use **Time+ (`PB5`)** to **increase** the green light duration.  
+3. Use **Time- (`PB6`)** to **decrease** the green light duration.  
+4. To **save changes**, press any other mode button (e.g., **Normal, Police, or Set Red**).
+
+---
+
+### **4️⃣ Police Mode**
+Press the **Police** button (`PB3`).  
+- The **red LED blinks continuously**.  
+- `"PO"` is displayed on the **7-segment display**.
+
+---
+
+### **5️⃣ Off Mode**
+Press the **Off** button (`PB4`).  
+- **All LEDs and the 7-segment display turn off.**
+
+---
+
+## 🚀 Getting Started
+
+### **1️⃣ Clone the Repository**
+```bash
+git clone https://github.com/RezaGooner/Traffic-Light-with-Counter.git
+cd Traffic-Light-with-Counter
+```
+
+### **2️⃣ Compile & Upload the Code**
+Use **Atmel Studio**, **AVR-GCC**, or **Arduino IDE** (if adapted for ATmega) to compile and upload the firmware.
+
+### **3️⃣ Simulate in Proteus**
+- Open the provided **Proteus** simulation file.
+- Run the simulation and test different modes.
+
+---
